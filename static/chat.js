@@ -8,8 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const resizer = document.getElementById("resizer");
   const sidebar = document.querySelector(".sidebar");
 
-  // 各モデルごとのセッション履歴（HTMLとして保存）
-  const sessions = {};
+  // 各モデルごとの会話履歴（メッセージの配列として保持）
+  const conversations = {};
   let currentModel = null;
   let isGenerating = false; // LLM生成中かどうかを管理
 
@@ -35,9 +35,30 @@ document.addEventListener("DOMContentLoaded", () => {
     isResizing = false;
   });
 
-  // モデル切り替え時、セッション（チャット履歴）を再表示
-  function loadSession(model) {
-    chatContainer.innerHTML = sessions[model] || "";
+  // メッセージバブル作成関数
+  function createMessageBubble(role, content) {
+    const bubble = document.createElement("div");
+    bubble.classList.add("message", role);
+    const labelDiv = document.createElement("div");
+    labelDiv.classList.add("message-label");
+    labelDiv.textContent = role === "user" ? "User" : currentModel;
+    const contentDiv = document.createElement("div");
+    contentDiv.classList.add("message-content");
+    contentDiv.innerHTML = content.replace(/\n/g, "<br>");
+    bubble.appendChild(labelDiv);
+    bubble.appendChild(contentDiv);
+    return bubble;
+  }
+
+  // 会話履歴をチャットコンテナにレンダリングする関数
+  function renderConversation(model) {
+    chatContainer.innerHTML = "";
+    if (!conversations[model]) return;
+    conversations[model].forEach(message => {
+      const bubble = createMessageBubble(message.role, message.content);
+      chatContainer.appendChild(bubble);
+    });
+    chatContainer.scrollTop = chatContainer.scrollHeight;
   }
 
   // モデル一覧を取得してリストに反映する
@@ -57,19 +78,24 @@ document.addEventListener("DOMContentLoaded", () => {
           li.dataset.model = fullName;
           li.title = fullName;
           li.addEventListener("click", () => {
-            if (currentModel) {
-              sessions[currentModel] = chatContainer.innerHTML;
+            currentModel = li.dataset.model;
+            // 会話履歴がなければ初期化
+            if (!conversations[currentModel]) {
+              conversations[currentModel] = [];
             }
             document.querySelectorAll("#model-list li").forEach(item => item.classList.remove("active"));
             li.classList.add("active");
-            currentModel = li.dataset.model;
-            loadSession(currentModel);
+            renderConversation(currentModel);
           });
           modelListElem.appendChild(li);
         });
         if (modelListElem.firstChild && !currentModel) {
           modelListElem.firstChild.classList.add("active");
           currentModel = modelListElem.firstChild.dataset.model;
+          if (!conversations[currentModel]) {
+            conversations[currentModel] = [];
+          }
+          renderConversation(currentModel);
         }
       })
       .catch(err => console.error("モデル一覧の取得エラー:", err));
@@ -93,62 +119,51 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     const selectedModel = activeModelElem.dataset.model;
     currentModel = selectedModel;
+    // 会話履歴がなければ初期化
+    if (!conversations[selectedModel]) {
+      conversations[selectedModel] = [];
+    }
     const message = chatInput.value.trim();
     if (!message) return;
 
-    // ユーザーの吹き出し（左側）
-    const userBubble = document.createElement("div");
-    userBubble.classList.add("message", "user");
-    const userLabel = document.createElement("div");
-    userLabel.classList.add("message-label");
-    userLabel.textContent = "User";
-    const userContent = document.createElement("div");
-    userContent.classList.add("message-content");
-    userContent.textContent = message;
-    userBubble.appendChild(userLabel);
-    userBubble.appendChild(userContent);
+    // ユーザーのメッセージを会話履歴に追加
+    conversations[selectedModel].push({ role: "user", content: message });
+    // UIにユーザーの吹き出しを追加
+    const userBubble = createMessageBubble("user", message);
     chatContainer.appendChild(userBubble);
     chatInput.value = "";
     chatContainer.scrollTop = chatContainer.scrollHeight;
 
-    sessions[selectedModel] = chatContainer.innerHTML;
-
-    // AIの吹き出し（右側）
-    const aiBubble = document.createElement("div");
-    aiBubble.classList.add("message", "ai");
-    const aiLabel = document.createElement("div");
-    aiLabel.classList.add("message-label");
-    aiLabel.textContent = selectedModel;
-    const aiContent = document.createElement("div");
-    aiContent.classList.add("message-content");
-    aiContent.textContent = "";
-    aiBubble.appendChild(aiLabel);
-    aiBubble.appendChild(aiContent);
+    isGenerating = true;
+    // AIの吹き出し（仮の空メッセージバブル）を作成
+    const aiBubble = createMessageBubble("ai", "");
     chatContainer.appendChild(aiBubble);
     chatContainer.scrollTop = chatContainer.scrollHeight;
 
-    sessions[selectedModel] = chatContainer.innerHTML;
-    isGenerating = true;
-
+    let aiResponse = "";
     const ws = new WebSocket(`ws://${window.location.host}/ws/chat`);
     ws.onopen = () => {
-      ws.send(JSON.stringify({ model: selectedModel, messages: [{ role: "user", content: message }] }));
+      // これまでの会話履歴を含めたメッセージを送信
+      ws.send(JSON.stringify({ model: selectedModel, messages: conversations[selectedModel] }));
     };
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.chunk) {
-        aiContent.textContent += data.chunk;
+        aiResponse += data.chunk;
+        // 更新された内容を反映
+        aiBubble.querySelector(".message-content").textContent = aiResponse;
         chatContainer.scrollTop = chatContainer.scrollHeight;
-        sessions[selectedModel] = chatContainer.innerHTML;
       }
       if (data.done) {
         ws.close();
         isGenerating = false;
+        // AIの応答を会話履歴に追加
+        conversations[selectedModel].push({ role: "assistant", content: aiResponse });
       }
     };
     ws.onerror = (err) => {
       console.error("WebSocket error:", err);
-      aiContent.textContent = "エラーが発生しました。";
+      aiBubble.querySelector(".message-content").textContent = "エラーが発生しました。";
       isGenerating = false;
     };
   });
@@ -156,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // チャットクリアボタン
   clearChatBtn.addEventListener("click", () => {
     if (currentModel) {
-      sessions[currentModel] = "";
+      conversations[currentModel] = [];
     }
     chatContainer.innerHTML = "";
   });
