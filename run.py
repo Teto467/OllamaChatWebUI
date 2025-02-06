@@ -1,17 +1,26 @@
-import os
+#!/usr/bin/env python3
 import sys
-import json
-import asyncio
-import aiohttp
 import subprocess
-from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-import uvicorn
-import webbrowser
-import threading
+
+# ブートストラップ: 必要なライブラリが見つからない場合、install.py を実行してインストールを行います。
+try:
+    import os
+    import json
+    import asyncio
+    import aiohttp
+    from contextlib import asynccontextmanager
+    from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+    from fastapi.responses import HTMLResponse, JSONResponse
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.templating import Jinja2Templates
+    import uvicorn
+    import webbrowser
+    import threading
+except ImportError as e:
+    print(f"ImportError: {str(e)}")
+    print("必要なライブラリが見つかりません。install.py を実行して必要なライブラリをインストールします。")
+    subprocess.check_call([sys.executable, "install.py"])
+    sys.exit(0)
 
 # SSL関連の環境変数を削除して平文HTTPで動作させる
 os.environ.pop("UVICORN_SSL_CERTFILE", None)
