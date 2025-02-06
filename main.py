@@ -47,16 +47,24 @@ async def get_models():
                 response.raise_for_status()
                 data = await response.json()
         except Exception as e:
-            return JSONResponse(content={"error": f"モデル取得エラー: {str(e)}"}, status_code=500)
-
+            print("モデル取得エラー:", e)
+            # エラー時はダミーデータを返す
+            dummy_models = [
+                {"name": "dummy-model-1", "installed": ""},
+                {"name": "dummy-model-2", "installed": ""}
+            ]
+            return JSONResponse(content=dummy_models)
     models = sorted(
         [
-            {"name": m["name"], "installed": m.get("modified_at", "")}
+            {"name": m.get("name", "Unnamed"), "installed": m.get("modified_at", "")}
             for m in data.get("models", [])
         ],
         key=lambda x: x["installed"],
         reverse=True
     )
+    # モデルが空の場合も表示できるようにダミーテキストを挿入
+    if not models:
+        models = [{"name": "利用可能なモデルなし", "installed": ""}]
     return JSONResponse(content=models)
 
 @app.websocket("/ws/chat")

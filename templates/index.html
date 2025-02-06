@@ -6,19 +6,23 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Ollama Chat</h1>
-        <div class="model-selection">
-            <label for="model-select">モデルを選択:</label>
-            <select id="model-select"></select>
+    <div class="wrapper">
+        <div class="sidebar">
+            <h2 class="sidebar-title">モデル選択</h2>
+            <ul id="model-list"></ul>
         </div>
-        <div id="chat-container" class="chat-container">
-            <!-- チャットメッセージがここに追加されます -->
+        <div id="resizer"></div>
+        <div class="main-content">
+            <header class="header">
+                <h1>Ollama Chat</h1>
+                <button id="clear-chat" class="clear-chat-btn">チャットをクリア</button>
+            </header>
+            <div id="chat-container" class="chat-container"></div>
+            <form id="chat-form" class="chat-form">
+                <input type="text" id="chat-input" placeholder="メッセージを入力..." autocomplete="off" required>
+                <button type="submit">送信</button>
+            </form>
         </div>
-        <form id="chat-form" class="chat-form">
-            <input type="text" id="chat-input" placeholder="メッセージを入力..." autocomplete="off" required>
-            <button type="submit">送信</button>
-        </form>
     </div>
     <script src="/static/chat.js"></script>
 </body>
