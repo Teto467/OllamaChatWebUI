@@ -122,6 +122,8 @@ body {
 /* 吹き出し内の本文 */
 .message-content {
   font-size: 16px;
+  /* whitespace, 改行がそのまま反映される */
+  white-space: pre-wrap;
 }
 
 /* ユーザーの吹き出し：左側配置 */
@@ -196,4 +198,20 @@ body {
 
 .clear-chat-btn:hover {
   background-color: #c0392b;
+}
+
+.refresh-models-btn {
+  background-color: #10a37f;
+  border: none;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: background-color 0.3s;
+}
+
+.refresh-models-btn:hover {
+  background-color: #0e8a68;
 } 

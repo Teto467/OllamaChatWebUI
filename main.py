@@ -88,37 +88,28 @@ async def websocket_endpoint(websocket: WebSocket):
                     "options": DEFAULT_OPTIONS
                 }
 
-                try:
-                    async with aiohttp.ClientSession() as session:
-                        async with session.post(f"{OLLAMA_API_URL}/api/chat", json=payload) as resp:
-                            buffer = ""
-                            async for chunk in resp.content.iter_chunked(1024):
-                                text_chunk = chunk.decode("utf-8")
-                                buffer += text_chunk
-                                while "\n" in buffer:
-                                    line, buffer = buffer.split("\n", 1)
-                                    if line.strip():
-                                        try:
-                                            response_json = json.loads(line)
-                                            content = response_json.get("message", {}).get("content", "")
-                                            if content:
-                                                await websocket.send_text(json.dumps({"chunk": content}))
-                                        except json.JSONDecodeError:
-                                            continue
-                            await websocket.send_text(json.dumps({"done": True}))
-                except Exception as e:
-                    # チャットAPIへの接続に失敗した場合のフォールバック処理
-                    dummy_responses = [
-                        "ダミーのチャットレスポンスです。",
-                        "これは続きのダミーメッセージです。"
-                    ]
-                    for msg in dummy_responses:
-                        await websocket.send_text(json.dumps({"chunk": msg}))
-                        await asyncio.sleep(0.3)
-                    await websocket.send_text(json.dumps({"done": True}))
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(f"{OLLAMA_API_URL}/api/chat", json=payload) as resp:
+                        # HTTPエラーなら例外を発生させる
+                        resp.raise_for_status()
+                        buffer = ""
+                        async for chunk in resp.content.iter_chunked(1024):
+                            text_chunk = chunk.decode("utf-8")
+                            buffer += text_chunk
+                            while "\n" in buffer:
+                                line, buffer = buffer.split("\n", 1)
+                                if line.strip():
+                                    try:
+                                        response_json = json.loads(line)
+                                        content = response_json.get("message", {}).get("content", "")
+                                        if content:
+                                            await websocket.send_text(json.dumps({"chunk": content}))
+                                    except json.JSONDecodeError:
+                                        continue
+                        await websocket.send_text(json.dumps({"done": True}))
             except json.JSONDecodeError:
                 await websocket.send_text(json.dumps({"error": "無効なJSON形式のメッセージ"}))
     except WebSocketDisconnect:
         print("WebSocket切断")
     except Exception as e:
-        await websocket.send_text(json.dumps({"error": str(e)})) 
+        await websocket.send_text(json.dumps({"error": f"LLM 出力中にエラーが発生しました: {str(e)}"})) 
