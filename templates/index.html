@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Ollama Chat - Web UI</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Ollama Chat</h1>
+        <div class="model-selection">
+            <label for="model-select">モデルを選択:</label>
+            <select id="model-select"></select>
+        </div>
+        <div id="chat-container" class="chat-container">
+            <!-- チャットメッセージがここに追加されます -->
+        </div>
+        <form id="chat-form" class="chat-form">
+            <input type="text" id="chat-input" placeholder="メッセージを入力..." autocomplete="off" required>
+            <button type="submit">送信</button>
+        </form>
+    </div>
+    <script src="/static/chat.js"></script>
+</body>
+</html> 
