@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>設定 - Ollama Chat</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    /* 設定ページ専用のスタイル */
+    .settings-container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .settings-container h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .settings-group {
+      margin-bottom: 15px;
+    }
+    .settings-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .settings-group select,
+    .settings-group input[type="checkbox"] {
+      font-size: 16px;
+      padding: 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .settings-actions {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .settings-actions button {
+      background-color: #16a085;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .settings-actions button:hover {
+      background-color: #138d75;
+    }
+  </style>
+</head>
+<body>
+  <div class="settings-container">
+    <h2>設定</h2>
+    <form id="settings-form">
+      <div class="settings-group">
+        <label for="sortOrder">モデルの並び順</label>
+        <select id="sortOrder" name="sortOrder">
+          <option value="name_asc">名前昇順 (A → Z)</option>
+          <option value="name_desc">名前降順 (Z → A)</option>
+          <option value="date_asc">インストール日時 昇順 (古い → 新しい)</option>
+          <option value="date_desc">インストール日時 降順 (新しい → 古い)</option>
+          <option value="size_asc">モデルサイズ 昇順 (小さい → 大きい)</option>
+          <option value="size_desc">モデルサイズ 降順 (大きい → 小さい)</option>
+        </select>
+      </div>
+      <div class="settings-group">
+        <label>
+          <input type="checkbox" id="showInstalled" name="showInstalled">
+          インストール日時を表示する
+        </label>
+      </div>
+      <div class="settings-group">
+        <label>
+          <input type="checkbox" id="showSize" name="showSize">
+          モデルサイズを表示する
+        </label>
+      </div>
+      <div class="settings-actions">
+        <button type="submit">保存</button>
+      </div>
+    </form>
+    <div class="settings-actions" style="margin-top:10px;">
+      <button id="backBtn">戻る</button>
+    </div>
+  </div>
+  <script>
+    // 初期設定をロード
+    document.addEventListener("DOMContentLoaded", () => {
+      const sortOrder = localStorage.getItem("sortOrder") || "date_desc";
+      const showInstalled = localStorage.getItem("showInstalled") === "true";
+      const showSize = localStorage.getItem("showSize") === "true";
+
+      document.getElementById("sortOrder").value = sortOrder;
+      document.getElementById("showInstalled").checked = showInstalled;
+      document.getElementById("showSize").checked = showSize;
+
+      document.getElementById("settings-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const newSortOrder = document.getElementById("sortOrder").value;
+        const newShowInstalled = document.getElementById("showInstalled").checked;
+        const newShowSize = document.getElementById("showSize").checked;
+        localStorage.setItem("sortOrder", newSortOrder);
+        localStorage.setItem("showInstalled", newShowInstalled);
+        localStorage.setItem("showSize", newShowSize);
+        alert("設定が保存されました。");
+      });
+
+      document.getElementById("backBtn").addEventListener("click", () => {
+        window.location.href = "/";
+      });
+    });
+  </script>
+</body>
+</html> 

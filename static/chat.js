@@ -1,56 +1,43 @@
 document.addEventListener("DOMContentLoaded", () => {
   const modelListElem = document.getElementById("model-list");
-  const refreshModelsBtn = document.getElementById("refresh-models");
   const chatContainer = document.getElementById("chat-container");
   const chatForm = document.getElementById("chat-form");
   const chatInput = document.getElementById("chat-input");
   const clearChatBtn = document.getElementById("clear-chat");
-  const resizer = document.getElementById("resizer");
   const sidebar = document.querySelector(".sidebar");
 
-  // 各モデルごとの会話履歴（メッセージの配列として保持）
+  // サイドバー内の横スクロールを無効化
+  sidebar.style.overflowX = "hidden";
+
+  // 各モデルごとの会話履歴（メッセージの配列）
   const conversations = {};
   let currentModel = null;
-  let isGenerating = false; // LLM生成中かどうかを管理
+  let isGenerating = false;
+  let activeWebSocket = null;
 
-  // サイドバーのリサイズ処理
-  let isResizing = false;
-  resizer.addEventListener("mousedown", (e) => {
-    if (isGenerating) return;
-    isResizing = true;
-  });
-  document.addEventListener("mousemove", (e) => {
-    if (!isResizing || isGenerating) return;
-    if (e.buttons !== 1) {
-      isResizing = false;
-      return;
-    }
-    let newWidth = e.clientX;
-    if (newWidth < 200) newWidth = 200;
-    const maxWidth = window.innerWidth * 0.25;
-    if (newWidth > maxWidth) newWidth = maxWidth;
-    sidebar.style.width = newWidth + "px";
-  });
-  document.addEventListener("mouseup", () => {
-    isResizing = false;
-  });
-
-  // メッセージバブル作成関数
   function createMessageBubble(role, content) {
     const bubble = document.createElement("div");
     bubble.classList.add("message", role);
+
     const labelDiv = document.createElement("div");
     labelDiv.classList.add("message-label");
     labelDiv.textContent = role === "user" ? "User" : currentModel;
+
     const contentDiv = document.createElement("div");
     contentDiv.classList.add("message-content");
-    contentDiv.innerHTML = content.replace(/\n/g, "<br>");
+    contentDiv.textContent = content;
+
     bubble.appendChild(labelDiv);
     bubble.appendChild(contentDiv);
+
+    bubble.style.opacity = 0;
+    bubble.style.transition = "opacity 0.3s ease-in";
+    setTimeout(() => {
+      bubble.style.opacity = "1";
+    }, 50);
     return bubble;
   }
 
-  // 会話履歴をチャットコンテナにレンダリングする関数
   function renderConversation(model) {
     chatContainer.innerHTML = "";
     if (!conversations[model]) return;
@@ -61,30 +48,38 @@ document.addEventListener("DOMContentLoaded", () => {
     chatContainer.scrollTop = chatContainer.scrollHeight;
   }
 
-  // モデル一覧を取得してリストに反映する
   function updateModelList() {
-    fetch("/models")
+    const sortOrder = localStorage.getItem("sortOrder") || "date_desc";
+    return fetch(`/models?sort=${sortOrder}`)
       .then(response => response.json())
-      .then(models => {
-        if (!Array.isArray(models)) {
-          console.error("不正なモデル一覧データ:", models);
-          return;
-        }
+      .then(data => {
         modelListElem.innerHTML = "";
-        models.forEach(model => {
+        data.forEach(model => {
           const li = document.createElement("li");
-          const fullName = model.name;
-          li.textContent = fullName;
-          li.dataset.model = fullName;
-          li.title = fullName;
+          li.dataset.model = model.name;
+          li.innerHTML = `<div class="model-name">${model.name}</div>`;
+          let details = "";
+          if (localStorage.getItem("showInstalled") === "true" && model.installed) {
+            details += `<div class="model-installed">📅 ${model.installed}</div>`;
+          }
+          if (localStorage.getItem("showSize") === "true" && model.size) {
+            details += `<div class="model-size">💾 ${model.size} MB</div>`;
+          }
+          if (details) {
+            li.innerHTML += `<div class="model-details">${details}</div>`;
+          }
+          li.title = model.name;
           li.addEventListener("click", () => {
+            if (isGenerating) {
+              alert("AIが応答を生成中です。モデルの変更はできません。");
+              return;
+            }
             currentModel = li.dataset.model;
-            // 会話履歴がなければ初期化
+            document.querySelectorAll("#model-list li").forEach(item => item.classList.remove("active"));
+            li.classList.add("active");
             if (!conversations[currentModel]) {
               conversations[currentModel] = [];
             }
-            document.querySelectorAll("#model-list li").forEach(item => item.classList.remove("active"));
-            li.classList.add("active");
             renderConversation(currentModel);
           });
           modelListElem.appendChild(li);
@@ -98,20 +93,15 @@ document.addEventListener("DOMContentLoaded", () => {
           renderConversation(currentModel);
         }
       })
-      .catch(err => console.error("モデル一覧の取得エラー:", err));
+      .catch(err => console.error("モデル取得エラー", err));
   }
 
-  // 初回のモデル一覧読み込み
-  updateModelList();
-
-  // リストのみを更新するボタンの処理
-  refreshModelsBtn.addEventListener("click", () => {
-    updateModelList();
-  });
-
-  // チャットフォーム送信イベント
   chatForm.addEventListener("submit", (e) => {
     e.preventDefault();
+    if (isGenerating) {
+      alert("現在、応答中です。少々お待ちください。");
+      return;
+    }
     const activeModelElem = document.querySelector("#model-list li.active");
     if (!activeModelElem) {
       alert("モデルを選択してください");
@@ -119,60 +109,143 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     const selectedModel = activeModelElem.dataset.model;
     currentModel = selectedModel;
-    // 会話履歴がなければ初期化
     if (!conversations[selectedModel]) {
       conversations[selectedModel] = [];
     }
     const message = chatInput.value.trim();
     if (!message) return;
-
-    // ユーザーのメッセージを会話履歴に追加
     conversations[selectedModel].push({ role: "user", content: message });
-    // UIにユーザーの吹き出しを追加
     const userBubble = createMessageBubble("user", message);
     chatContainer.appendChild(userBubble);
     chatInput.value = "";
     chatContainer.scrollTop = chatContainer.scrollHeight;
 
+    // LLM生成開始
     isGenerating = true;
-    // AIの吹き出し（仮の空メッセージバブル）を作成
     const aiBubble = createMessageBubble("ai", "");
     chatContainer.appendChild(aiBubble);
     chatContainer.scrollTop = chatContainer.scrollHeight;
-
     let aiResponse = "";
-    const ws = new WebSocket(`ws://${window.location.host}/ws/chat`);
-    ws.onopen = () => {
-      // これまでの会話履歴を含めたメッセージを送信
-      ws.send(JSON.stringify({ model: selectedModel, messages: conversations[selectedModel] }));
+    const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+    activeWebSocket = new WebSocket(`${wsProtocol}://${window.location.host}/ws/chat`);
+    activeWebSocket.onopen = () => {
+      activeWebSocket.send(JSON.stringify({ model: selectedModel, messages: conversations[selectedModel] }));
     };
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+    activeWebSocket.onmessage = (event) => {
+      let data;
+      try {
+        data = JSON.parse(event.data);
+      } catch (error) {
+        console.error("無効なメッセージ形式:", event.data);
+        return;
+      }
       if (data.chunk) {
         aiResponse += data.chunk;
-        // 更新された内容を反映
-        aiBubble.querySelector(".message-content").textContent = aiResponse;
+        const contentElem = aiBubble.querySelector(".message-content");
+        if (contentElem) {
+          contentElem.textContent = aiResponse;
+        }
         chatContainer.scrollTop = chatContainer.scrollHeight;
       }
       if (data.done) {
-        ws.close();
+        activeWebSocket.close();
+        activeWebSocket = null;
         isGenerating = false;
-        // AIの応答を会話履歴に追加
         conversations[selectedModel].push({ role: "assistant", content: aiResponse });
       }
     };
-    ws.onerror = (err) => {
+    activeWebSocket.onerror = (err) => {
       console.error("WebSocket error:", err);
-      aiBubble.querySelector(".message-content").textContent = "エラーが発生しました。";
+      const contentElem = aiBubble.querySelector(".message-content");
+      if (contentElem) {
+        contentElem.textContent = "エラーが発生しました。";
+      }
       isGenerating = false;
+      activeWebSocket.close();
+      activeWebSocket = null;
     };
   });
 
-  // チャットクリアボタン
   clearChatBtn.addEventListener("click", () => {
+    if (activeWebSocket) {
+      activeWebSocket.close();
+      activeWebSocket = null;
+    }
+    isGenerating = false;
     if (currentModel) {
       conversations[currentModel] = [];
     }
     chatContainer.innerHTML = "";
   });
-}); 
+
+  chatInput.addEventListener("input", function () {
+    this.style.height = "auto";
+    this.style.height = this.scrollHeight + "px";
+  });
+
+  // トースト通知を表示する関数
+  function showToast(message) {
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    // 少し待ってトーストを表示
+    setTimeout(() => {
+      toast.classList.add("show");
+    }, 100);
+    // 2秒後に非表示にして削除
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => {
+        document.body.removeChild(toast);
+      }, 500);
+    }, 2000);
+  }
+
+  // 設定モーダルの表示／非表示
+  const settingsBtn = document.getElementById("settings-btn");
+  const settingsModal = document.getElementById("settings-modal");
+  const closeSettingsBtn = document.getElementById("close-settings-btn");
+  const settingsForm = document.getElementById("settings-form");
+
+  if (settingsBtn && settingsModal) {
+    settingsBtn.addEventListener("click", () => {
+      settingsModal.classList.remove("hidden");
+      // 現在の設定をフォームに反映
+      document.getElementById("sortOrder").value = localStorage.getItem("sortOrder") || "date_desc";
+      document.getElementById("showInstalled").checked = localStorage.getItem("showInstalled") === "true";
+      document.getElementById("showSize").checked = localStorage.getItem("showSize") === "true";
+    });
+  }
+  if (closeSettingsBtn && settingsModal) {
+    closeSettingsBtn.addEventListener("click", () => {
+      settingsModal.classList.add("hidden");
+    });
+  }
+  if (settingsForm) {
+    settingsForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const newSortOrder = document.getElementById("sortOrder").value;
+      const newShowInstalled = document.getElementById("showInstalled").checked;
+      const newShowSize = document.getElementById("showSize").checked;
+      localStorage.setItem("sortOrder", newSortOrder);
+      localStorage.setItem("showInstalled", newShowInstalled);
+      localStorage.setItem("showSize", newShowSize);
+      showToast("設定が保存されました。");
+      settingsModal.classList.add("hidden");
+      updateModelList();
+    });
+  }
+
+  // 更新ボタンにクリック時の処理を追加
+  const refreshButton = document.getElementById("refresh-models");
+  if (refreshButton) {
+    refreshButton.addEventListener("click", () => {
+      // アニメーション処理を削除し、直接モデルリストを更新する
+      updateModelList();
+    });
+  }
+
+  updateModelList();
+});
+

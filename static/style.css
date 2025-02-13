@@ -6,39 +6,39 @@
 }
 
 body {
+  /* 明るめの背景グラデーション */
+  background: linear-gradient(135deg, #f0f2f5, #d9e2ec);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #F7F7F8;
   color: #333;
   height: 100vh;
   display: flex;
   overflow: hidden;
 }
 
-/* レイアウト */
+/* 全体レイアウト */
 .wrapper {
   display: flex;
   width: 100%;
   height: 100vh;
 }
 
-/* サイドバー */
+/* サイドバー - 初期幅を画面の5分の1に */
 .sidebar {
-  width: 260px;
-  background-color: #343541;
-  color: #fff;
+  width: 20%;
+  min-width: 250px;
+  background-color: #2c3e50;
+  color: #ecf0f1;
   padding: 20px;
   display: flex;
   flex-direction: column;
-  /* 初期サイズは固定、後にリサイズで変化 */
-  min-width: 200px;
 }
 
 .sidebar-title {
-  font-size: 20px;
-  margin-bottom: 10px;
+  font-size: 24px;
+  margin-bottom: 20px;
   text-align: center;
-  border-bottom: 1px solid #565d70;
-  padding-bottom: 5px;
+  border-bottom: 2px solid #16a085;
+  padding-bottom: 10px;
 }
 
 .sidebar ul {
@@ -46,172 +46,488 @@ body {
   padding: 0;
   flex-grow: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  margin-top: 15px;
 }
 
+/* モデルリストの各項目 */
 .sidebar ul li {
   padding: 10px;
-  margin-bottom: 8px;
-  background-color: #4a4f60;
-  border-radius: 8px;
+  margin-bottom: 10px;
+  background-color: #34495e;
+  border-radius: 15px;
   cursor: pointer;
-  transition: background-color 0.3s;
-  max-width: 25vw;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+/* 各要素の配置を固定 */
+.model-name {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.model-details {
+  margin-top: 5px;
+  font-size: 0.9em;
+  color: #bdc3c7;
+}
+
+.model-installed,
+.model-size {
+  display: block;
+}
+
+.model-extras {
+  margin-left: 5px;
+  font-size: 0.9em;
+  color: #bdc3c7;
+}
+
+.model-installed,
+.model-size {
+  font-size: 0.9em;
+  color: #95a5a6;
 }
 
 .sidebar ul li:hover {
-  background-color: #565d70;
+  background-color: #16a085;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar ul li.active {
-  background-color: #6a6f82;
-  font-weight: bold;
-  border: 2px solid #fff;
-  border-radius: 16px;
+  background-color: #1abc9c;
+  border: 2px solid #16a085;
 }
 
-/* リサイズバー（サイドバーとメインの境界） */
+/* リサイズバー */
 #resizer {
   width: 5px;
   cursor: ew-resize;
-  background-color: #ccc;
+  background-color: #bdc3c7;
 }
 
 /* メインコンテンツ */
 .main-content {
   flex-grow: 1;
+  margin: 10px;
   padding: 20px;
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
 }
 
-/* チャットコンテナ */
+/* ヘッダー */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background: #ecf0f1;
+  border-bottom: 2px solid #16a085;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.header button {
+  background-color: #e74c3c;
+  border: none;
+  border-radius: 25px;
+  padding: 8px 16px;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.header button:hover {
+  background-color: #c0392b;
+}
+
 .chat-container {
   flex-grow: 1;
-  overflow-y: auto;
+  background: #f7f8fa;
+  border-radius: 10px;
   padding: 15px;
-  margin-bottom: 20px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-}
-
-/* 吹き出し全体のスタイル */
-/* デフォルトはしないので、各送信者毎に設定 */
-.message {
-  max-width: 70%;
-  padding: 10px 15px;
-  margin: 10px 0;
-  border-radius: 16px;
-  line-height: 1.5;
-  word-wrap: break-word;
-  white-space: pre-wrap;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
-/* 吹き出し内のラベル */
+/* メッセージバブル */
+.message {
+  max-width: 75%;
+  padding: 10px 15px;
+  margin: 8px 0;
+  border-radius: 15px;
+  font-size: 14px;
+  line-height: 1.5;
+  display: inline-block;
+  position: relative;
+}
+
 .message-label {
   font-weight: bold;
   font-size: 14px;
   margin-bottom: 4px;
 }
 
-/* 吹き出し内の本文 */
 .message-content {
   font-size: 16px;
-  /* whitespace, 改行がそのまま反映される */
   white-space: pre-wrap;
 }
 
-/* ユーザーの吹き出し：左側配置 */
+/* ユーザーメッセージ */
 .message.user {
-  background-color: #DCF8C6;
-  align-self: flex-start;
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 10px;
-  max-width: 70%;
+  align-self: flex-end;
+  background-color: #dcf8c6;
+  color: #333;
 }
 
-/* AI (LLM) の吹き出し：右側配置 */
+/* AIからのメッセージ */
 .message.ai {
-  background-color: #F1F0F0;
-  align-self: flex-end;
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 10px;
-  max-width: 70%;
+  align-self: flex-start;
+  background-color: #e8eaf6;
+  color: #333;
 }
 
 /* チャットフォーム */
 .chat-form {
   display: flex;
-  border-top: 1px solid #e0e0e0;
-  padding: 10px 20px;
-  background-color: #f9f9f9;
+  align-items: center;
+  margin-top: 10px;
+  background: #ecf0f1;
+  padding: 10px;
+  border-radius: 35px;
 }
 
-.chat-form input {
+/* テキストエリア */
+.chat-form textarea {
   flex-grow: 1;
-  padding: 10px 15px;
-  border: 1px solid #ccc;
-  border-radius: 20px;
+  padding: 12px 20px;
   font-size: 16px;
+  border: 1px solid #bdc3c7;
+  border-radius: 35px;
+  resize: none;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.3s, height 0.2s ease;
+  background-color: #fff;
+  min-height: 40px;
+  max-height: 150px;
+  overflow-y: auto;
 }
 
-.chat-form input:focus {
-  border-color: #10a37f;
+.chat-form textarea:focus {
+  border-color: #16a085;
 }
 
 .chat-form button {
-  background-color: #10a37f;
+  background-color: #16a085;
   border: none;
   color: #fff;
-  padding: 0 20px;
-  margin-left: 10px;
-  border-radius: 20px;
+  padding: 12px 20px;
   font-size: 16px;
+  border-radius: 35px;
   cursor: pointer;
+  margin-left: 10px;
   transition: background-color 0.3s;
 }
 
 .chat-form button:hover {
-  background-color: #0e8a68;
+  background-color: #138d75;
 }
 
-/* 改善されたチャットクリアボタン */
-.clear-chat-btn {
-  background-color: #e74c3c;
+/* サイドバー更新ボタン（グラデーションなし） */
+.refresh-models-btn {
+  background-color: #16a085; /* 単色背景 */
   border: none;
   color: #fff;
-  padding: 8px 16px;
-  border-radius: 20px;
+  padding: 10px 16px;
   font-size: 16px;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.refresh-models-btn:hover {
+  background-color: #1abc9c;
+}
+
+.refresh-models-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.sidebar.generating {
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Updated settings icon style for better visibility */
+#settings-btn, .settings-link {
+  background-color: transparent !important;
+  border: 2px solid transparent !important;
+  border-radius: 50% !important;
+  color: #333 !important;
+  font-size: 24px !important;
+  width: 44px !important;
+  height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease !important;
+}
+
+#settings-btn:hover, .settings-link:hover {
+  border-color: #16a085 !important;
+  color: #16a085 !important;
+  transform: scale(1.15) rotate(10deg) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+#settings-btn:active, .settings-link:active {
+  transform: scale(0.95) !important;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.clear-chat-btn {
+  background-color: #16a085;
+  border: none;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 20px;
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
 .clear-chat-btn:hover {
-  background-color: #c0392b;
+  background-color: #138d75;
 }
 
-.refresh-models-btn {
-  background-color: #10a37f;
+/* 設定モーダル（オーバーレイ） */
+.settings-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.settings-modal.hidden {
+  display: none;
+}
+.settings-modal .modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease-out;
+  position: relative;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
   border: none;
-  color: #fff;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 14px;
+  font-size: 24px;
   cursor: pointer;
-  margin-bottom: 10px;
-  transition: background-color 0.3s;
+  color: #333;
 }
 
-.refresh-models-btn:hover {
-  background-color: #0e8a68;
-} 
+/* 設定フォーム内部 */
+.settings-form .settings-group {
+  margin-bottom: 15px;
+}
+
+.settings-form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.settings-form select,
+.settings-form input[type="checkbox"] {
+  font-size: 16px;
+  padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.settings-actions {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.settings-actions button {
+  background-color: #16a085;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.settings-actions button:hover {
+  background-color: #138d75;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* アイコン部分のスタイルを追加 */
+.refresh-icon {
+  display: inline-block;  /* アニメーション用に inline-block */
+  transition: transform 0.3s;
+}
+
+/* 新しい専用アニメーション：回転と拡大縮小 */
+@keyframes refreshPulse {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.2) rotate(90deg);
+  }
+  50% {
+    transform: scale(1) rotate(180deg);
+  }
+  75% {
+    transform: scale(1.2) rotate(270deg);
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+  }
+}
+
+/* 専用アニメーションクラス */
+.refresh-icon.refreshing {
+  animation: refreshPulse 1s linear;
+}
+
+/* ローダーアニメーションをボタン内に収めるための調整 */
+.loader {
+  color: #ffffff;
+  font-size: 14px;  /* ボタンのフォントサイズに合わせる */
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  position: absolute;         /* absolute に変更 */
+  top: 50%;                   /* 縦中央 */
+  left: 50%;                  /* 横中央 */
+  transform: translate(-50%, -50%);  /* 中央に固定 */
+  text-indent: -9999em;       /* テキストを隠す */
+  animation: load4 0.433s infinite linear;  /* アニメーション時間を3分の1に調整 */
+  margin: 0;
+}
+
+@-webkit-keyframes load4 {
+  0%,
+  100% {
+    box-shadow: 0 -3em 0 0.2em, 2em -2em 0 0em, 3em 0 0 -1em, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 -1em, -3em 0 0 -1em, -2em -2em 0 0;
+  }
+  12.5% {
+    box-shadow: 0 -3em 0 0, 2em -2em 0 0.2em, 3em 0 0 0, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 -1em, -3em 0 0 -1em, -2em -2em 0 -1em;
+  }
+  25% {
+    box-shadow: 0 -3em 0 -0.5em, 2em -2em 0 0, 3em 0 0 0.2em, 2em 2em 0 0, 0 3em 0 -1em, -2em 2em 0 -1em, -3em 0 0 -1em, -2em -2em 0 -1em;
+  }
+  37.5% {
+    box-shadow: 0 -3em 0 -1em, 2em -2em 0 -1em, 3em 0em 0 0, 2em 2em 0 0.2em, 0 3em 0 0em, -2em 2em 0 -1em, -3em 0em 0 -1em, -2em -2em 0 -1em;
+  }
+  50% {
+    box-shadow: 0 -3em 0 -1em, 2em -2em 0 -1em, 3em 0 0 -1em, 2em 2em 0 0em, 0 3em 0 0.2em, -2em 2em 0 0, -3em 0em 0 -1em, -2em -2em 0 -1em;
+  }
+  62.5% {
+    box-shadow: 0 -3em 0 -1em, 2em -2em 0 -1em, 3em 0 0 -1em, 2em 2em 0 -1em, 0 3em 0 0, -2em 2em 0 0.2em, -3em 0 0 0, -2em -2em 0 -1em;
+  }
+  75% {
+    box-shadow: 0em -3em 0 -1em, 2em -2em 0 -1em, 3em 0em 0 -1em, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 0, -3em 0em 0 0.2em, -2em -2em 0 0;
+  }
+  87.5% {
+    box-shadow: 0em -3em 0 0, 2em -2em 0 -1em, 3em 0 0 -1em, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 0, -3em 0em 0 0, -2em -2em 0 0.2em;
+  }
+}
+@keyframes load4 {
+  0%,
+  100% {
+    box-shadow: 0 -3em 0 0.2em, 2em -2em 0 0em, 3em 0 0 -1em, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 -1em, -3em 0 0 -1em, -2em -2em 0 0;
+  }
+  12.5% {
+    box-shadow: 0 -3em 0 0, 2em -2em 0 0.2em, 3em 0 0 0, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 -1em, -3em 0 0 -1em, -2em -2em 0 -1em;
+  }
+  25% {
+    box-shadow: 0 -3em 0 -0.5em, 2em -2em 0 0, 3em 0 0 0.2em, 2em 2em 0 0, 0 3em 0 -1em, -2em 2em 0 -1em, -3em 0 0 -1em, -2em -2em 0 -1em;
+  }
+  37.5% {
+    box-shadow: 0 -3em 0 -1em, 2em -2em 0 -1em, 3em 0em 0 0, 2em 2em 0 0.2em, 0 3em 0 0em, -2em 2em 0 -1em, -3em 0em 0 -1em, -2em -2em 0 -1em;
+  }
+  50% {
+    box-shadow: 0 -3em 0 -1em, 2em -2em 0 -1em, 3em 0 0 -1em, 2em 2em 0 0em, 0 3em 0 0.2em, -2em 2em 0 0, -3em 0em 0 -1em, -2em -2em 0 -1em;
+  }
+  62.5% {
+    box-shadow: 0 -3em 0 -1em, 2em -2em 0 -1em, 3em 0 0 -1em, 2em 2em 0 -1em, 0 3em 0 0, -2em 2em 0 0.2em, -3em 0 0 0, -2em -2em 0 -1em;
+  }
+  75% {
+    box-shadow: 0em -3em 0 -1em, 2em -2em 0 -1em, 3em 0em 0 -1em, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 0, -3em 0em 0 0.2em, -2em -2em 0 0;
+  }
+  87.5% {
+    box-shadow: 0em -3em 0 0, 2em -2em 0 -1em, 3em 0 0 -1em, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 0, -3em 0em 0 0, -2em -2em 0 0.2em;
+  }
+}
+
+/* Toast notification styles */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #323232;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  opacity: 0;
+  transition: opacity 0.5s ease, bottom 0.5s ease;
+  z-index: 1000;
+}
+.toast.show {
+  opacity: 1;
+  bottom: 40px;
+}

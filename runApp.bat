@@ -10,7 +10,7 @@ if errorlevel 1 (
 REM このバッチファイルのあるディレクトリに移動
 cd /d "%~dp0"
 
-REM run.py を実行（必要なライブラリが無い場合は install.py が実行されます）
-python run.py
+REM app.py を実行
+python app.py
 
 pause 

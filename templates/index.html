@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ollama Chat - Web UI</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -9,22 +10,65 @@
     <div class="wrapper">
         <div class="sidebar">
             <h2 class="sidebar-title">モデル選択</h2>
-            <button id="refresh-models" class="refresh-models-btn">更新</button>
+            <button id="refresh-models" class="refresh-models-btn">
+                <span class="refresh-icon">更新</span>
+            </button>
             <ul id="model-list"></ul>
         </div>
-        <div id="resizer"></div>
         <div class="main-content">
             <header class="header">
                 <h1>Ollama Chat</h1>
-                <button id="clear-chat" class="clear-chat-btn">チャットをクリア</button>
+                <div class="header-actions">
+                    <button id="clear-chat" class="clear-chat-btn">チャットをクリア</button>
+                    <button id="settings-btn" class="settings-btn" title="設定">&#9881;</button>
+                </div>
             </header>
+            <!-- チャットメッセージ表示用コンテナ -->
             <div id="chat-container" class="chat-container"></div>
+            <!-- 単一のチャットフォーム -->
             <form id="chat-form" class="chat-form">
-                <input type="text" id="chat-input" placeholder="メッセージを入力..." autocomplete="off" required>
+                <textarea id="chat-input" placeholder="メッセージを入力..." autocomplete="off" required rows="1"></textarea>
                 <button type="submit">送信</button>
             </form>
         </div>
     </div>
+
+    <!-- 設定オーバーレイ（モーダル） -->
+    <div id="settings-modal" class="settings-modal hidden">
+        <div class="modal-content">
+            <button id="close-settings-btn" class="close-btn">&times;</button>
+            <h2>設定</h2>
+            <form id="settings-form" class="settings-form">
+                <div class="settings-group">
+                    <label for="sortOrder">モデルの並び順</label>
+                    <select id="sortOrder" name="sortOrder">
+                        <option value="name_asc">名前昇順 (A → Z)</option>
+                        <option value="name_desc">名前降順 (Z → A)</option>
+                        <option value="date_asc">インストール日時 昇順 (古い → 新しい)</option>
+                        <option value="date_desc">インストール日時 降順 (新しい → 古い)</option>
+                        <option value="size_asc">モデルサイズ 昇順 (小さい → 大きい)</option>
+                        <option value="size_desc">モデルサイズ 降順 (大きい → 小さい)</option>
+                    </select>
+                </div>
+                <div class="settings-group">
+                    <label>
+                        <input type="checkbox" id="showInstalled" name="showInstalled">
+                        インストール日時を表示する
+                    </label>
+                </div>
+                <div class="settings-group">
+                    <label>
+                        <input type="checkbox" id="showSize" name="showSize">
+                        モデルサイズを表示する
+                    </label>
+                </div>
+                <div class="settings-actions">
+                    <button type="submit">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="/static/chat.js"></script>
 </body>
 </html> 

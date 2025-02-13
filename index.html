@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ollama Chat - Web UI</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="wrapper">
+        <div class="sidebar">
+            <h2 class="sidebar-title">モデル選択</h2>
+            <button id="refresh-models" class="refresh-models-btn">更新</button>
+            <ul id="model-list"></ul>
+        </div>
+        <div class="main-content">
+            <header class="header">
+                <h1>Ollama Chat</h1>
+                <div class="header-actions">
+                    <button id="clear-chat" class="clear-chat-btn">チャットをクリア</button>
+                    <a href="/settings" class="settings-link" title="設定">&#9881;</a>
+                </div>
+            </header>
+            <!-- チャットメッセージ表示用コンテナ -->
+            <div id="chat-container" class="chat-container"></div>
+            <!-- 単一のチャットフォーム -->
+            <form id="chat-form" class="chat-form">
+                <textarea id="chat-input" placeholder="メッセージを入力..." autocomplete="off" required rows="1"></textarea>
+                <button type="submit">送信</button>
+            </form>
+        </div>
+    </div>
+    <script src="/static/chat.js"></script>
+</body>
+</html> 
