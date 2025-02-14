@@ -1,3 +1,22 @@
+/* CSS変数でテーマ管理（今後の変更が容易に） */
+:root {
+  --primary-color: #16a085;
+  --primary-hover: #138d75;
+  --secondary-color: #1abc9c;
+  --sidebar-bg: #2c3e50;
+  --sidebar-text: #ecf0f1;
+  --body-bg-start: #f0f2f5;
+  --body-bg-end: #d9e2ec;
+  --toast-bg: #323232;
+  --button-size: 48px;
+  --button-radius: 50%;
+  --stop-color: #888888; /* 停止ボタン用のグレー */
+  --scrollbar-width: 8px;
+  --scrollbar-track-color: #e0e0e0;       /* 全体向けの明るめトラック */
+  --scrollbar-thumb-color: #cccccc;       /* 全体向けのサム */
+  --scrollbar-thumb-hover: #b3b3b3;         /* ホバー時 */
+}
+
 /* Reset */
 * {
   box-sizing: border-box;
@@ -7,7 +26,7 @@
 
 body {
   /* 明るめの背景グラデーション */
-  background: linear-gradient(135deg, #f0f2f5, #d9e2ec);
+  background: linear-gradient(135deg, var(--body-bg-start), var(--body-bg-end));
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: #333;
   height: 100vh;
@@ -22,15 +41,19 @@ body {
   height: 100vh;
 }
 
-/* サイドバー - 初期幅を画面の5分の1に */
+/* サイドバー - 画面の5分の1に固定 */
 .sidebar {
   width: 20%;
-  min-width: 250px;
-  background-color: #2c3e50;
-  color: #ecf0f1;
+  /* 必要に応じて min-width/max-width も同様に設定 */
+  min-width: 20%;
+  max-width: 20%;
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text);
   padding: 20px;
   display: flex;
   flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: #888888 #34495e; /* thumb / track */
 }
 
 .sidebar-title {
@@ -94,9 +117,17 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+/* モデル選択時の背景と文字色を強調する */
 .sidebar ul li.active {
   background-color: #1abc9c;
-  border: 2px solid #16a085;
+  color: #fff;
+}
+
+/* ハイライト時のモデル詳細（インストール日時とモデルサイズ）の文字色の上書き */
+.sidebar ul li.active .model-installed,
+.sidebar ul li.active .model-size {
+  color: #fff !important;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
 }
 
 /* リサイズバー */
@@ -220,6 +251,8 @@ body {
   min-height: 40px;
   max-height: 150px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
 }
 
 .chat-form textarea:focus {
@@ -227,24 +260,36 @@ body {
 }
 
 .chat-form button {
-  background-color: #16a085;
-  border: none;
+  background-color: var(--primary-color);
   color: #fff;
-  padding: 12px 20px;
-  font-size: 16px;
-  border-radius: 35px;
+  border: none;
+  border-radius: var(--button-radius);
+  width: var(--button-size);
+  height: var(--button-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  margin-left: 10px;
-  transition: background-color 0.3s;
+  transition: transform 0.1s ease, background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .chat-form button:hover {
-  background-color: #138d75;
+  background-color: var(--primary-hover);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.chat-form button:active {
+  transform: scale(0.95);
+}
+
+/* 生成中（停止状態）のボタンはグレーに */
+.chat-form button.generating {
+  background-color: var(--stop-color);
 }
 
 /* サイドバー更新ボタン（グラデーションなし） */
 .refresh-models-btn {
-  background-color: #16a085; /* 単色背景 */
+  background-color: #16a085;
   border: none;
   color: #fff;
   padding: 10px 16px;
@@ -277,7 +322,7 @@ body {
 
 /* Updated settings icon style for better visibility */
 #settings-btn, .settings-link {
-  background-color: transparent !important;
+  background: transparent !important;
   border: 2px solid transparent !important;
   border-radius: 50% !important;
   color: #333 !important;
@@ -519,7 +564,7 @@ body {
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #323232;
+  background-color: var(--toast-bg);
   color: #fff;
   padding: 10px 20px;
   border-radius: 5px;
@@ -530,4 +575,65 @@ body {
 .toast.show {
   opacity: 1;
   bottom: 40px;
+}
+
+/* チャット入力欄・送信ボタンの無効時スタイル */
+.chat-form textarea:disabled {
+  background-color: #f2f2f2;
+  cursor: not-allowed;
+}
+
+.chat-form button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* ボタン内用インラインローディングスピナー */
+.chat-form button .loader {
+  display: inline-block;
+  margin-right: 8px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-top: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  vertical-align: middle;
+}
+
+/* 全体のグローバルスクロールバー（Webkit） */
+*::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+  height: var(--scrollbar-width);
+}
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-color);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb-color);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+/* Firefox ブラウザ用（グローバル設定） */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
+}
+
+/* サイドバーの背景に合わせた個別上書き */
+.sidebar {
+  scrollbar-color: #888888 #34495e;
+}
+.sidebar::-webkit-scrollbar-track {
+  background: #34495e;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: #888888;
+}
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background-color: #666666;
 }

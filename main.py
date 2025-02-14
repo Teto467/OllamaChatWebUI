@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-OLLAMA_API_URL = "http://localhost:11434"
+OLLAMA_API_URL = os.getenv("OLLAMA_API_URL", "http://localhost:11434")
 DEFAULT_OPTIONS = {"temperature": 0.7, "num_ctx": 4096}
 
 templates = Jinja2Templates(directory="templates")
