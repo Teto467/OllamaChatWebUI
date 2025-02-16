@@ -48,13 +48,18 @@ DEFAULT_OPTIONS = {"temperature": 0.7, "num_ctx": 4096}
 templates = Jinja2Templates(directory="templates")
 
 def start_ollama_server():
+    import platform
     try:
-        subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print("Ollamaサーバーを起動しています...")
+        if platform.system() == "Windows":
+            # Windows では "ollama app.exe" の実行（ファイル名にスペースが含まれるため shell 実行）
+            subprocess.Popen('"ollama app.exe"', shell=True, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+        else:
+            # Linux / Mac では標準で "ollama" を実行（出力を DEVNULL にリダイレクト）
+            subprocess.Popen(["ollama"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except FileNotFoundError:
         print("Ollamaがインストールされていないか、パスが通っていません。")
     except Exception as e:
-        print(f"Ollamaサーバーの起動に失敗しました: {e}")
+        print("Ollamaサーバーの起動に失敗しました:", e)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -176,4 +181,6 @@ def main():
     uvicorn.run("app:app", host="127.0.0.1", port=8001, reload=False)
 
 if __name__ == "__main__":
+    import multiprocessing
+    multiprocessing.freeze_support()
     main() 
